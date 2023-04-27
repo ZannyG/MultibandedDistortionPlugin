@@ -10,9 +10,11 @@
 
 #include <JuceHeader.h>
 
+
+
 struct ChainSettings
 {
-    float peakFreq{10000}, peakGainInDecibels{0}, peakQuality{ 0 };
+    float peakFreq{ 1200 }, peakGainInDecibels{ 0 }, peakQuality{ 0.1f };
 };
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 //==============================================================================
@@ -76,6 +78,11 @@ private:
         HighCut,
 
     };
+
+    void updatePeakFilter(const ChainSettings& chainSettings);
+    using Coefficients = Filter::CoefficientsPtr;
+    static void updateCoefficients(Coefficients& old, const Coefficients& replacements); 
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultibandedDistortionPluginAudioProcessor)
 };

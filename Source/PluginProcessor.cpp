@@ -103,10 +103,7 @@ void MultibandedDistortionPluginAudioProcessor::prepareToPlay(double sampleRate,
 	rightChain.prepare(spec);
 
 	auto chainSettings = getChainSettings(apvts);
-	auto peakCoefficents = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq,chainSettings.peakQuality ,juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
-
-	*leftChain.get<ChainPositions::Peak>().coefficients = *peakCoefficents;
-	*rightChain.get<ChainPositions::Peak>().coefficients = *peakCoefficents;
+	updatePeakFilter(chainSettings);
 }
 
 void MultibandedDistortionPluginAudioProcessor::releaseResources()
@@ -158,10 +155,8 @@ void MultibandedDistortionPluginAudioProcessor::processBlock(juce::AudioBuffer<f
 
 
 	auto chainSettings = getChainSettings(apvts);
-	auto peakCoefficents = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
 
-	*leftChain.get<ChainPositions::Peak>().coefficients = *peakCoefficents;
-	*rightChain.get<ChainPositions::Peak>().coefficients = *peakCoefficents;
+	updatePeakFilter(chainSettings);
 
 
 	juce::dsp::AudioBlock<float> block(buffer);
@@ -208,11 +203,28 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
 
 	return settings;
 }
+
+void MultibandedDistortionPluginAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings)
+{
+	auto peakCoefficents = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+
+	*leftChain.get<ChainPositions::Peak>().coefficients = *peakCoefficents;
+	*rightChain.get<ChainPositions::Peak>().coefficients = *peakCoefficents;
+
+	updateCoefficients(leftChain.get<ChainPositions::Peak>().coefficients, peakCoefficents);
+	updateCoefficients(rightChain.get<ChainPositions::Peak>().coefficients, peakCoefficents);
+
+}
+void MultibandedDistortionPluginAudioProcessor::updateCoefficients(Coefficients& old, const Coefficients& replacements)
+{
+	*old = *replacements;
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout MultibandedDistortionPluginAudioProcessor::createParameterLayout()
 {
 	juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-	layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain", "Peak Gain", juce::NormalisableRange<float>(-32.f, 32.f, 0.1f, 1.f), 0.0f));
+	layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain", "Peak Gain", juce::NormalisableRange<float>(-24.f, 24.f, 0.1f, 1.f), 0.0f));
 
 
 
