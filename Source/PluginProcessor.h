@@ -10,6 +10,11 @@
 
 #include <JuceHeader.h>
 
+struct ChainSettings
+{
+    float peakFreq{10000}, peakGainInDecibels{0}, peakQuality{ 0 };
+};
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 //==============================================================================
 /**
 */
@@ -63,6 +68,14 @@ private:
     using Cutfilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
     using Monochain = juce::dsp::ProcessorChain<Cutfilter, Filter, Cutfilter>;
     Monochain leftChain, rightChain;
+     
+    enum ChainPositions
+    {
+        LowCut,
+        Peak,
+        HighCut,
+
+    };
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultibandedDistortionPluginAudioProcessor)
 };
